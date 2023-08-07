@@ -246,6 +246,7 @@ void saveToFile(Employee* database, int currentEmployeeCount) {
     }
 
     fclose(file);
+    printf("h");
     printf("Data saved to employees.csv\n");
 }
 
