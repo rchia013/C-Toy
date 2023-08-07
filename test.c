@@ -17,7 +17,7 @@ void updateEmployee(Employee* database, int currentEmployeeCount);
 void removeEmployee(Employee* database, int* currentEmployeeCount);
 void listAllEmployees(Employee* database, int currentEmployeeCount);
 void saveToFile(Employee* database, int currentEmployeeCount);
-void loadFromFile(Employee** database, int* currentEmployeeCount, int* databaseSize);
+Employee* loadFromFile(Employee* database, int* currentEmployeeCount, int* databaseSize);
 
 
 int main() {
@@ -26,7 +26,7 @@ int main() {
     int databaseSize = 10;
     int currentEmployeeCount = 0;
 
-    loadFromFile(&database, &currentEmployeeCount, &databaseSize);
+    database = loadFromFile(database, &currentEmployeeCount, &databaseSize);
 
     do {
         printf("\nEmployee Management System\n");
@@ -249,11 +249,11 @@ void saveToFile(Employee* database, int currentEmployeeCount) {
     printf("Data saved to employees.csv\n");
 }
 
-void loadFromFile(Employee** database, int* currentEmployeeCount, int* databaseSize) {
+Employee* loadFromFile(Employee* database, int* currentEmployeeCount, int* databaseSize) {
     FILE* file = fopen("employees.csv", "r");
     if (file == NULL) {
         printf("No existing database found.\n");
-        return;
+        return database; // Return the existing pointer if no file is found
     }
 
     char line[200];
@@ -262,13 +262,15 @@ void loadFromFile(Employee** database, int* currentEmployeeCount, int* databaseS
     while (fgets(line, sizeof(line), file) != NULL) {
         if (*currentEmployeeCount == *databaseSize) {
             *databaseSize *= 2;
-            *database = realloc(*database, sizeof(Employee) * (*databaseSize));
+            database = realloc(database, sizeof(Employee) * (*databaseSize));
         }
 
-        sscanf(line, "%d,%49[^,],%49[^,],%49[^,],%f", &(*database)[*currentEmployeeCount].id, (*database)[*currentEmployeeCount].name, (*database)[*currentEmployeeCount].department, (*database)[*currentEmployeeCount].position, &(*database)[*currentEmployeeCount].salary);
+        sscanf(line, "%d,%49[^,],%49[^,],%49[^,],%f", &database[*currentEmployeeCount].id, database[*currentEmployeeCount].name, database[*currentEmployeeCount].department, database[*currentEmployeeCount].position, &database[*currentEmployeeCount].salary);
         (*currentEmployeeCount)++;
     }
 
     fclose(file);
     printf("Data loaded from employees.csv\n");
+
+    return database;
 }
