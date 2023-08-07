@@ -16,12 +16,17 @@ void searchEmployee(Employee* database, int currentEmployeeCount);
 void updateEmployee(Employee* database, int currentEmployeeCount);
 void removeEmployee(Employee* database, int* currentEmployeeCount);
 void listAllEmployees(Employee* database, int currentEmployeeCount);
+void saveToFile(Employee* database, int currentEmployeeCount);
+void loadFromFile(Employee** database, int* currentEmployeeCount, int* databaseSize);
+
 
 int main() {
     int choice;
     Employee* database = malloc(sizeof(Employee) * 10); // initially space for 10 employees
     int databaseSize = 10;
     int currentEmployeeCount = 0;
+
+    loadFromFile(&database, &currentEmployeeCount, &databaseSize);
 
     do {
         printf("\nEmployee Management System\n");
@@ -86,6 +91,8 @@ Employee* addEmployee(Employee* database, int* currentEmployeeCount, int* databa
 
     (*currentEmployeeCount)++;
 
+    saveToFile(database, *currentEmployeeCount); 
+
     return database;
 }
 
@@ -109,38 +116,92 @@ void displayEmployee(Employee* database, int currentEmployeeCount) {
 }
 
 void searchEmployee(Employee* database, int currentEmployeeCount) {
-    // You can extend this function to search by name or other fields as well
+    char name[50];
     int id;
-    printf("Enter Employee ID to Search: ");
-    scanf("%d", &id);
+    int choice;
 
-    for (int i = 0; i < currentEmployeeCount; i++) {
-        if (database[i].id == id) {
-            printf("Employee found!\n");
-            return;
-        }
+    printf("Search by ID or Name:\n");
+    printf("1: ID\n");
+    printf("2: Name\n");
+    printf("Enter your choce: ");
+    scanf("%d",&choice);
+
+
+    switch(choice) {
+        case 1:
+            printf("Enter Employee ID to Search: ");
+            scanf("%d", &id);
+
+            for (int i = 0; i < currentEmployeeCount; i++) {
+                if (database[i].id == id) {
+                    printf("Employee found!\n");
+                    return;
+                }
+            }
+            break;
+        case 2:
+            printf("Enter Employee Name to Search: ");
+            scanf("%s", &name);
+            for (int i = 0; i < currentEmployeeCount; i++) {
+                if (strcmp(database[i].name,name) == 0) {
+                    printf("Employee found!\n");
+                    return;
+                }
+            }
+            break;          
     }
 
     printf("Employee not found!\n");
 }
 
 void updateEmployee(Employee* database, int currentEmployeeCount) {
-    int id;
+    int id, choice;
     printf("Enter Employee ID to Update: ");
     scanf("%d", &id);
 
     for (int i = 0; i < currentEmployeeCount; i++) {
         if (database[i].id == id) {
-            // You can extend this to update other fields
-            printf("Enter New Salary: ");
-            scanf("%f", &database[i].salary);
+            printf("Select field to update:\n");
+            printf("1. Name\n");
+            printf("2. Department\n");
+            printf("3. Position\n");
+            printf("4. Salary\n");
+            printf("Enter your choice: ");
+            scanf("%d", &choice);
+
+            switch (choice) {
+                case 1:
+                    printf("Enter New Name: ");
+                    scanf("%s", database[i].name);
+                    break;
+                case 2:
+                    printf("Enter New Department: ");
+                    scanf("%s", database[i].department);
+                    break;
+                case 3:
+                    printf("Enter New Position: ");
+                    scanf("%s", database[i].position);
+                    break;
+                case 4:
+                    printf("Enter New Salary: ");
+                    scanf("%f", &database[i].salary);
+                    break;
+                default:
+                    printf("Invalid choice!\n");
+                    return;
+            }
+
             printf("Employee updated!\n");
+
+            saveToFile(database, currentEmployeeCount); 
+
             return;
         }
     }
 
     printf("Employee not found!\n");
 }
+
 
 void removeEmployee(Employee* database, int* currentEmployeeCount) {
     int id;
@@ -154,6 +215,9 @@ void removeEmployee(Employee* database, int* currentEmployeeCount) {
             }
 
             (*currentEmployeeCount)--;
+
+            saveToFile(database, *currentEmployeeCount); 
+
             printf("Employee removed!\n");
             return;
         }
@@ -167,4 +231,44 @@ void listAllEmployees(Employee* database, int currentEmployeeCount) {
         printf("ID: %d, Name: %s, Department: %s, Position: %s, Salary: %.2f\n", 
                database[i].id, database[i].name, database[i].department, database[i].position, database[i].salary);
     }
+}
+
+void saveToFile(Employee* database, int currentEmployeeCount) {
+    FILE* file = fopen("employees.csv", "w");
+    if (file == NULL) {
+        printf("Error opening file!\n");
+        return;
+    }
+
+    fprintf(file, "id,name,department,position,salary\n");
+    for (int i = 0; i < currentEmployeeCount; i++) {
+        fprintf(file, "%d,%s,%s,%s,%.2f\n", database[i].id, database[i].name, database[i].department, database[i].position, database[i].salary);
+    }
+
+    fclose(file);
+    printf("Data saved to employees.csv\n");
+}
+
+void loadFromFile(Employee** database, int* currentEmployeeCount, int* databaseSize) {
+    FILE* file = fopen("employees.csv", "r");
+    if (file == NULL) {
+        printf("No existing database found.\n");
+        return;
+    }
+
+    char line[200];
+    fgets(line, sizeof(line), file); // Read the header
+
+    while (fgets(line, sizeof(line), file) != NULL) {
+        if (*currentEmployeeCount == *databaseSize) {
+            *databaseSize *= 2;
+            *database = realloc(*database, sizeof(Employee) * (*databaseSize));
+        }
+
+        sscanf(line, "%d,%49[^,],%49[^,],%49[^,],%f", &(*database)[*currentEmployeeCount].id, (*database)[*currentEmployeeCount].name, (*database)[*currentEmployeeCount].department, (*database)[*currentEmployeeCount].position, &(*database)[*currentEmployeeCount].salary);
+        (*currentEmployeeCount)++;
+    }
+
+    fclose(file);
+    printf("Data loaded from employees.csv\n");
 }
