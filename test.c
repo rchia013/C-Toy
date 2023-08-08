@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <gtk/gtk.h>
+
 
 typedef struct {
     int id;
@@ -274,4 +276,12 @@ Employee* loadFromFile(Employee* database, int* currentEmployeeCount, int* datab
     printf("Data loaded from employees.csv\n");
 
     return database;
+}
+
+void on_add_employee_button_clicked(GtkWidget *button, gpointer data) {
+    // Code to add an employee
+}
+
+void on_display_employee_button_clicked(GtkWidget *button, gpointer data) {
+    // Code to display an employee
 }
