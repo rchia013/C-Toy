@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <gtk/gtk.h>
-
+#include <ctype.h>
 
 typedef struct {
     int id;
@@ -13,16 +12,20 @@ typedef struct {
 } Employee;
 
 Employee* addEmployee(Employee* database, int* currentEmployeeCount, int* databaseSize);
-void displayEmployee(Employee* database, int currentEmployeeCount);
+void displayEmployee(Employee* database, int currentEmployeeCount,int ID);
 void searchEmployee(Employee* database, int currentEmployeeCount);
 void updateEmployee(Employee* database, int currentEmployeeCount);
 void removeEmployee(Employee* database, int* currentEmployeeCount);
 void listAllEmployees(Employee* database, int currentEmployeeCount);
 void saveToFile(Employee* database, int currentEmployeeCount);
 Employee* loadFromFile(Employee* database, int* currentEmployeeCount, int* databaseSize);
+int isUniqueID(Employee* database, int currentEmployeeCount, int id);
+int isAlphaString(const char* str);
+float getSalary();
 
 
 int main() {
+    printf("HELLO");
     int choice;
     Employee* database = malloc(sizeof(Employee) * 10); // initially space for 10 employees
     int databaseSize = 10;
@@ -47,7 +50,7 @@ int main() {
                 database = addEmployee(database, &currentEmployeeCount, &databaseSize);
                 break;
             case 2:
-                displayEmployee(database, currentEmployeeCount);
+                displayEmployee(database, currentEmployeeCount,0);
                 break;
             case 3:
                 searchEmployee(database, currentEmployeeCount);
@@ -75,21 +78,53 @@ int main() {
 }
 
 Employee* addEmployee(Employee* database, int* currentEmployeeCount, int* databaseSize) {
+
     if(*currentEmployeeCount == *databaseSize) {
         *databaseSize *= 2;
         database = realloc(database, sizeof(Employee) * (*databaseSize));
     }
 
+    // printf("Enter Employee ID: ");
+    // scanf("%d", &database[*currentEmployeeCount].id);
+
+    int id;
     printf("Enter Employee ID: ");
-    scanf("%d", &database[*currentEmployeeCount].id);
-    printf("Enter Name: ");
-    scanf("%s", database[*currentEmployeeCount].name);
-    printf("Enter Department: ");
-    scanf("%s", database[*currentEmployeeCount].department);
-    printf("Enter Position: ");
-    scanf("%s", database[*currentEmployeeCount].position);
-    printf("Enter Salary: ");
-    scanf("%f", &database[*currentEmployeeCount].salary);
+    scanf("%d", &id);
+
+    if (!isUniqueID(database, *currentEmployeeCount, id)) {
+        printf("Error: ID must be unique! Existing employee details: \n");
+        displayEmployee(database, *currentEmployeeCount, id);
+        return database;
+    } 
+    database[*currentEmployeeCount].id = id;
+
+
+    // printf("Enter Name: ");
+    // scanf("%s", database[*currentEmployeeCount].name);
+    do {
+        printf("Enter Name (alphabetical characters only): ");
+        scanf("%s", database[*currentEmployeeCount].name);
+    } while (!isAlphaString(database[*currentEmployeeCount].name));
+
+
+    // printf("Enter Department: ");
+    // scanf("%s", database[*currentEmployeeCount].department);
+    do {
+        printf("Enter Department (alphabetical characters only): ");
+        scanf("%s", database[*currentEmployeeCount].department);
+    } while (!isAlphaString(database[*currentEmployeeCount].department));
+
+
+    // printf("Enter Position: ");
+    // scanf("%s", database[*currentEmployeeCount].position);
+    do {
+        printf("Enter Position (alphabetical characters only): ");
+        scanf("%s", database[*currentEmployeeCount].position);
+    } while (!isAlphaString(database[*currentEmployeeCount].position));
+
+
+    database[*currentEmployeeCount].salary = getSalary();
+
 
     (*currentEmployeeCount)++;
 
@@ -98,10 +133,14 @@ Employee* addEmployee(Employee* database, int* currentEmployeeCount, int* databa
     return database;
 }
 
-void displayEmployee(Employee* database, int currentEmployeeCount) {
+void displayEmployee(Employee* database, int currentEmployeeCount, int ID) {
     int id;
-    printf("Enter Employee ID to Display: ");
-    scanf("%d", &id);
+    if (ID == 0){
+        printf("Enter Employee ID to Display: ");
+        scanf("%d", &id);
+    }else{
+        id = ID;
+    }
 
     for (int i = 0; i < currentEmployeeCount; i++) {
         if (database[i].id == id) {
@@ -248,7 +287,6 @@ void saveToFile(Employee* database, int currentEmployeeCount) {
     }
 
     fclose(file);
-    printf("h");
     printf("Data saved to employees.csv\n");
 }
 
@@ -278,10 +316,44 @@ Employee* loadFromFile(Employee* database, int* currentEmployeeCount, int* datab
     return database;
 }
 
-void on_add_employee_button_clicked(GtkWidget *button, gpointer data) {
-    // Code to add an employee
+// Function to check if an ID is unique
+int isUniqueID(Employee* database, int currentEmployeeCount, int id) {
+    for (int i = 0; i < currentEmployeeCount; i++) {
+        if (database[i].id == id) {
+            return 0; // Not unique
+        }
+    }
+    return 1; // Unique
 }
 
-void on_display_employee_button_clicked(GtkWidget *button, gpointer data) {
-    // Code to display an employee
+// Function to check if a string contains only alphabetical characters
+int isAlphaString(const char* str) {
+    for (int i = 0; str[i]; i++) {
+        if (!isalpha(str[i]) && str[i] != ' ') {
+            printf("Error: Only alphabetical characters allowed\n");
+            return 0; // Contains non-alphabetical character
+        }
+    }
+    return 1; // All characters are alphabetical
+}
+
+
+
+float getSalary() {
+    float salary;
+    int result;
+
+    do {
+        printf("Enter Salary: ");
+        result = scanf("%f", &salary);
+
+        // Clear the input buffer if a float is not entered
+        while (getchar() != '\n');
+
+        if (result == 0) {
+            printf("Error: Salary must be a float value! Please try again.\n");
+        }
+    } while (result == 0);
+
+    return salary;
 }
