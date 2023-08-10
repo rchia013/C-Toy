@@ -25,7 +25,6 @@ float getSalary();
 
 
 int main() {
-    printf("HELLO");
     int choice;
     Employee* database = malloc(sizeof(Employee) * 10); // initially space for 10 employees
     int databaseSize = 10;
