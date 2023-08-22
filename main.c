@@ -11,6 +11,13 @@ typedef struct {
     float salary;
 } Employee;
 
+typedef struct BSTNode {
+    Employee* employee;
+    struct BSTNode* left;
+    struct BSTNode* right;
+} BSTNode;
+
+
 Employee* addEmployee(Employee* database, int* currentEmployeeCount, int* databaseSize);
 void displayEmployee(Employee* database, int currentEmployeeCount,int ID);
 void searchEmployee(Employee* database, int currentEmployeeCount);
@@ -22,9 +29,13 @@ Employee* loadFromFile(Employee* database, int* currentEmployeeCount, int* datab
 int isUniqueID(Employee* database, int currentEmployeeCount, int id);
 int isAlphaString(const char* str);
 float getSalary();
+BSTNode* insertBSTNode(BSTNode* root, Employee* employee, int sortBySalary);
+void inOrderPrint(BSTNode* root);
+void printSortedEmployees(Employee* database, int currentEmployeeCount, int sortBySalary);
 
 
 int main() {
+    char inputBuffer[100];
     int choice;
     Employee* database = malloc(sizeof(Employee) * 10); // initially space for 10 employees
     int databaseSize = 10;
@@ -40,9 +51,13 @@ int main() {
         printf("4. Update Employee\n");
         printf("5. Remove Employee\n");
         printf("6. List All Employees\n");
+        printf("7. Sort and Print Employees\n");
         printf("0. Exit\n");
         printf("Enter your choice: ");
-        scanf("%d", &choice);
+        //fgets reads a line from the input and stores it in a buffer, and then sscanf parses the required value from that buffer. 
+        //This ensures that the input doesn't exceed the buffer size and provides more flexibility in handling incorrect input.
+        fgets(inputBuffer, sizeof(inputBuffer), stdin);
+        sscanf(inputBuffer, "%d", &choice);
 
         switch (choice) {
             case 1:
@@ -63,6 +78,15 @@ int main() {
             case 6:
                 listAllEmployees(database, currentEmployeeCount);
                 break;
+            case 7:
+                printf("Sort by Name or Salary:\n");
+                printf("1: Name\n");
+                printf("2: Salary\n");
+                printf("Enter your choice: ");
+                fgets(inputBuffer, sizeof(inputBuffer), stdin);
+                sscanf(inputBuffer, "%d", &choice);
+                printSortedEmployees(database, currentEmployeeCount, choice == 2);
+                break;
             case 0:
                 free(database);
                 printf("Exiting...\n");
@@ -77,48 +101,62 @@ int main() {
 }
 
 Employee* addEmployee(Employee* database, int* currentEmployeeCount, int* databaseSize) {
-
+    char inputBuffer[100];
     if(*currentEmployeeCount == *databaseSize) {
         *databaseSize *= 2;
         database = realloc(database, sizeof(Employee) * (*databaseSize));
     }
 
-    // printf("Enter Employee ID: ");
-    // scanf("%d", &database[*currentEmployeeCount].id);
-
     int id;
-    printf("Enter Employee ID: ");
-    scanf("%d", &id);
+    // printf("Enter Employee ID (Numbers only): ");
+    // fgets(inputBuffer, sizeof(inputBuffer), stdin);
+    // if(sscanf(inputBuffer, "%d", &id) == 1){
+    //     if (!isUniqueID(database, *currentEmployeeCount, id)) {
+    //         printf("Error: ID must be unique! Existing employee details: \n");
+    //         displayEmployee(database, *currentEmployeeCount, id);
+    //         return database;
+    //     } 
+    //     database[*currentEmployeeCount].id = id;
+    // }
 
-    if (!isUniqueID(database, *currentEmployeeCount, id)) {
-        printf("Error: ID must be unique! Existing employee details: \n");
-        displayEmployee(database, *currentEmployeeCount, id);
-        return database;
-    } 
-    database[*currentEmployeeCount].id = id;
+    //sscanf(inputBuffer, "%f", &salary) == 1
 
 
-    // printf("Enter Name: ");
-    // scanf("%s", database[*currentEmployeeCount].name);
+    char newlineCheck;
+    do {
+        printf("Enter Employee ID (Integer only): ");
+        fgets(inputBuffer, sizeof(inputBuffer), stdin);
+
+        if (sscanf(inputBuffer, "%d%c", &id, &newlineCheck) == 2 && newlineCheck == '\n') {
+            if (!isUniqueID(database, *currentEmployeeCount, id)) {
+                printf("Error: ID must be unique! Existing employee details: \n");
+                displayEmployee(database, *currentEmployeeCount, id);
+                return database;
+            }
+            break; // Exit the loop if a valid integer ID has been found.
+        } else {
+            printf("Error: ID can only be an Integer! Please try again.\n");
+        }
+    } while (1);
+
+
+
     do {
         printf("Enter Name (alphabetical characters only): ");
-        scanf("%s", database[*currentEmployeeCount].name);
+        fgets(inputBuffer, sizeof(inputBuffer), stdin);
+        sscanf(inputBuffer, "%s", database[*currentEmployeeCount].name);
     } while (!isAlphaString(database[*currentEmployeeCount].name));
 
-
-    // printf("Enter Department: ");
-    // scanf("%s", database[*currentEmployeeCount].department);
     do {
         printf("Enter Department (alphabetical characters only): ");
-        scanf("%s", database[*currentEmployeeCount].department);
+        fgets(inputBuffer, sizeof(inputBuffer), stdin);
+        sscanf(inputBuffer, "%s", database[*currentEmployeeCount].department);
     } while (!isAlphaString(database[*currentEmployeeCount].department));
 
-
-    // printf("Enter Position: ");
-    // scanf("%s", database[*currentEmployeeCount].position);
     do {
         printf("Enter Position (alphabetical characters only): ");
-        scanf("%s", database[*currentEmployeeCount].position);
+        fgets(inputBuffer, sizeof(inputBuffer), stdin);
+        sscanf(inputBuffer, "%s", database[*currentEmployeeCount].position);
     } while (!isAlphaString(database[*currentEmployeeCount].position));
 
 
@@ -133,10 +171,12 @@ Employee* addEmployee(Employee* database, int* currentEmployeeCount, int* databa
 }
 
 void displayEmployee(Employee* database, int currentEmployeeCount, int ID) {
+    char inputBuffer[100];
     int id;
     if (ID == 0){
         printf("Enter Employee ID to Display: ");
-        scanf("%d", &id);
+        fgets(inputBuffer, sizeof(inputBuffer), stdin);
+        sscanf(inputBuffer, "%d", &id);
     }else{
         id = ID;
     }
@@ -156,6 +196,7 @@ void displayEmployee(Employee* database, int currentEmployeeCount, int ID) {
 }
 
 void searchEmployee(Employee* database, int currentEmployeeCount) {
+    char inputBuffer[100];
     char name[50];
     int id;
     int choice;
@@ -164,13 +205,15 @@ void searchEmployee(Employee* database, int currentEmployeeCount) {
     printf("1: ID\n");
     printf("2: Name\n");
     printf("Enter your choce: ");
-    scanf("%d",&choice);
+    fgets(inputBuffer, sizeof(inputBuffer), stdin);
+    sscanf(inputBuffer, "%d", &choice);
 
 
     switch(choice) {
         case 1:
             printf("Enter Employee ID to Search: ");
-            scanf("%d", &id);
+            fgets(inputBuffer, sizeof(inputBuffer), stdin);
+            sscanf(inputBuffer, "%d", &id);
 
             for (int i = 0; i < currentEmployeeCount; i++) {
                 if (database[i].id == id) {
@@ -181,10 +224,11 @@ void searchEmployee(Employee* database, int currentEmployeeCount) {
             break;
         case 2:
             printf("Enter Employee Name to Search: ");
-            scanf("%s", &name);
+            fgets(inputBuffer, sizeof(inputBuffer), stdin);
+            sscanf(inputBuffer, "%s", &name);
             for (int i = 0; i < currentEmployeeCount; i++) {
                 //NOTE
-                if (strcmp(database[i].name,name) == 0) {
+                if (strncmp(database[i].name, name, sizeof(database[i].name)) == 0) {
                     printf("Employee found!\n");
                     return;
                 }
@@ -196,9 +240,11 @@ void searchEmployee(Employee* database, int currentEmployeeCount) {
 }
 
 void updateEmployee(Employee* database, int currentEmployeeCount) {
+    char inputBuffer[100];
     int id, choice;
     printf("Enter Employee ID to Update: ");
-    scanf("%d", &id);
+    fgets(inputBuffer, sizeof(inputBuffer), stdin);
+    sscanf(inputBuffer, "%d", &id);
 
     for (int i = 0; i < currentEmployeeCount; i++) {
         if (database[i].id == id) {
@@ -208,29 +254,35 @@ void updateEmployee(Employee* database, int currentEmployeeCount) {
             printf("3. Position\n");
             printf("4. Salary\n");
             printf("Enter your choice: ");
-            scanf("%d", &choice);
+            fgets(inputBuffer, sizeof(inputBuffer), stdin);
+            sscanf(inputBuffer, "%d", &choice);
 
             switch (choice) {
                 case 1:
                     printf("Enter New Name: ");
-                    scanf("%s", database[i].name);
+                    fgets(inputBuffer, sizeof(inputBuffer), stdin);
+                    sscanf(inputBuffer, "%s", database[i].name);
                     break;
                 case 2:
                     printf("Enter New Department: ");
-                    scanf("%s", database[i].department);
+                    fgets(inputBuffer, sizeof(inputBuffer), stdin);
+                    sscanf(inputBuffer, "%s", database[i].department);
                     break;
                 case 3:
                     printf("Enter New Position: ");
-                    scanf("%s", database[i].position);
+                    fgets(inputBuffer, sizeof(inputBuffer), stdin);
+                    sscanf(inputBuffer, "%s", database[i].position);
                     break;
                 case 4:
                     printf("Enter New Salary: ");
-                    scanf("%f", &database[i].salary);
+                    fgets(inputBuffer, sizeof(inputBuffer), stdin);
+                    sscanf(inputBuffer, "%f", &database[i].salary);
                     break;
                 default:
                     printf("Invalid choice!\n");
                     return;
             }
+
 
             printf("Employee updated!\n");
 
@@ -245,9 +297,11 @@ void updateEmployee(Employee* database, int currentEmployeeCount) {
 
 
 void removeEmployee(Employee* database, int* currentEmployeeCount) {
+    char inputBuffer[100];
     int id;
     printf("Enter Employee ID to Remove: ");
-    scanf("%d", &id);
+    fgets(inputBuffer, sizeof(inputBuffer), stdin);
+    sscanf(inputBuffer, "%d", &id);
 
     for (int i = 0; i < *currentEmployeeCount; i++) {
         if (database[i].id == id) {
@@ -340,26 +394,56 @@ int isAlphaString(const char* str) {
 
 // Function to check if input is a float
 float getSalary() {
+    char inputBuffer[100];
     float salary;
-    int result;
 
     do {
         printf("Enter Salary: ");
-        //NOTES
-        result = scanf("%f", &salary);
+        fgets(inputBuffer, sizeof(inputBuffer), stdin);
 
-        //NOTES
-        // Clear the input buffer if a float is not entered
-        while (getchar() != '\n');
-
-        if (result == 0) {
+        if (sscanf(inputBuffer, "%f", &salary) == 1) {
+            return salary;
+        } else {
             printf("Error: Salary must be a float value! Please try again.\n");
         }
-        //printf("test");
-    } while (result == 0);
-
-    return salary;
+    } while (1);
 }
 
+BSTNode* insertBSTNode(BSTNode* root, Employee* employee, int sortBySalary) {
+    if (root == NULL) {
+        root = (BSTNode*)malloc(sizeof(BSTNode));
+        root->employee = employee;
+        root->left = root->right = NULL;
+        return root;
+    }
+    
+    if (sortBySalary) {
+        if (employee->salary < root->employee->salary)
+            root->left = insertBSTNode(root->left, employee, sortBySalary);
+        else
+            root->right = insertBSTNode(root->right, employee, sortBySalary);
+    } else {
+        if (strcmp(employee->name, root->employee->name) < 0)
+            root->left = insertBSTNode(root->left, employee, sortBySalary);
+        else
+            root->right = insertBSTNode(root->right, employee, sortBySalary);
+    }
 
-//Data structure that allows quick way to output sorted structure of employees E.g. Tree
+    return root;
+}
+
+void inOrderPrint(BSTNode* root) {
+    if (root == NULL) return;
+    inOrderPrint(root->left);
+    printf("ID: %d, Name: %s, Department: %s, Position: %s, Salary: %.2f\n", 
+           root->employee->id, root->employee->name, root->employee->department, root->employee->position, root->employee->salary);
+    inOrderPrint(root->right);
+}
+
+void printSortedEmployees(Employee* database, int currentEmployeeCount, int sortBySalary) {
+    BSTNode* root = NULL;
+    for (int i = 0; i < currentEmployeeCount; i++) {
+        root = insertBSTNode(root, &database[i], sortBySalary);
+    }
+    inOrderPrint(root);
+}
